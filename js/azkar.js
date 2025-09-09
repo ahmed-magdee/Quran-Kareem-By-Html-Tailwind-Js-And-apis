@@ -1,6 +1,15 @@
 const loading = document.querySelector(".loading-animation");
 const dataContainer = document.querySelector(".container-data");
 
+// ErrorHandling Function
+function errorHandling(element) {
+  element.classList.add("flex", "justify-center", "items-center");
+  const h2Error = document.createElement("h2");
+  h2Error.className = "text-2xl text-main";
+  h2Error.appendChild(document.createTextNode("حدث خطأ ما ):"));
+  element.appendChild(h2Error);
+}
+
 function fetchData() {
   fetch(
     `https://raw.githubusercontent.com/nawafalqari/azkar-api/56df51279ab6eb86dc2f6202c7de26c8948331c1/azkar.json`
@@ -11,12 +20,12 @@ function fetchData() {
     .then((response) => {
       const data = response;
       const keys = Object.keys(data); // The Keys Of The Objcet
-      loading.remove();
       createAzkarUl(data, keys);
     })
-    .catch((error) => {
-      console.log(error);
-    });
+    .catch(() => {
+      errorHandling(dataContainer);
+    })
+    .finally(() => loading.remove());
 }
 fetchData();
 

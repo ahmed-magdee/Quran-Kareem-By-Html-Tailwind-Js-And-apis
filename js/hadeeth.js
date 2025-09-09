@@ -1,6 +1,15 @@
 const loading = document.querySelector(".loading-animation");
 const allDataDiv = document.querySelector(".container-data");
 
+// ErrorHandling Function
+function errorHandling(element) {
+  element.classList.add("flex", "justify-center", "items-center");
+  const h2Error = document.createElement("h2");
+  h2Error.className = "text-2xl text-main";
+  h2Error.appendChild(document.createTextNode("حدث خطأ ما ):"));
+  element.appendChild(h2Error);
+}
+
 // Fetch The All Data
 function fetchData(select) {
   fetch(
@@ -12,12 +21,12 @@ function fetchData(select) {
       return response.json();
     })
     .then((data) => {
+      console.log(data);
       const allData = data;
       const items = allData.items; // Loop
       const pages = allData.pagination.pages; // Loop
       const pageSize = allData.pagination.pageSize;
       const endIndex = allData.pagination.endIndex;
-      loading.remove();
       const mainDiv = document.createElement("div");
       mainDiv.classList.add("main-div");
       allDataDiv.innerHTML = "";
@@ -25,7 +34,10 @@ function fetchData(select) {
       createPages(items, mainDiv, pages, pageSize, endIndex);
       createTextHadeeth(items, mainDiv, endIndex);
     })
-    .catch((error) => console.log(error));
+    .catch(() => {
+      errorHandling(allDataDiv);
+    })
+    .finally(() => loading.remove());
 }
 fetchData();
 

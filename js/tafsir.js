@@ -1,6 +1,16 @@
 const mainUl = document.querySelector(".main-ul");
 const loadingDiv = document.querySelector(".loading-animation");
 const overflow = document.querySelector(".overflow");
+const mainContainerDiv = document.querySelector(".main-section .container");
+
+// ErrorHandling Function
+function errorHandling(element) {
+  element.classList.add("flex", "justify-center", "items-center");
+  const h2Error = document.createElement("h2");
+  h2Error.className = "text-2xl text-main";
+  h2Error.appendChild(document.createTextNode("حدث خطأ ما ):"));
+  element.appendChild(h2Error);
+}
 
 // All Sorahs Fetch
 function allSorahsFetch() {
@@ -16,7 +26,11 @@ function showingData() {
     .then((fetching) => {
       const allData = fetching.data;
       loadingDiv.remove();
-      createTheDivs(allData);
+      if (typeof allData !== "object") {
+        errorHandling(mainContainerDiv);
+      } else {
+        createTheDivs(allData);
+      }
     })
     .catch((error) => {
       console.log(error);
@@ -45,10 +59,6 @@ function createTheDivs(allData) {
       overflow.appendChild(animationDiv);
       overflow.classList.remove("top-full");
       overflow.classList.add("top-0");
-      const allLi = document.querySelectorAll(".sorah");
-      allLi.forEach((liSorah) => {
-        liSorah.classList.add("stop");
-      });
       const sorahWhatWeWant = +li.dataset.sorah;
       const sorahnameLi = li.dataset.sorahname;
       fetchDataSorahTafsir(sorahWhatWeWant, sorahnameLi);
@@ -64,22 +74,10 @@ function fetchDataSorahTafsir(sorahWhatWeWant, sorahnameLi) {
     .then((response) => response.json())
     .then((data) => {
       overflow.innerHTML = "";
-      const allLi = document.querySelectorAll(".sorah");
-      allLi.forEach((liSorah) => {
-        liSorah.classList.remove("stop");
-      });
-      const tafsir = data.result;
-      const allTextAyahsContainer = document.createElement("div");
-
-      const h2 = document.createElement("h2");
-      h2.className =
-        "mb-10 text-red-800 w-fit border-b-2 border-red-800 mx-auto";
-      h2.innerHTML = `${sorahnameLi} <span>وعدد آياتها ${tafsir.length}</span>`;
-      allTextAyahsContainer.appendChild(h2);
-
       const button = document.createElement("button");
-      button.className =
-        "sticky top-0 right-0 w-10 h-10 flex justify-center items-center bg-red-900 rounded-full text-2xl text-white ouline-none";
+      button.className = `${
+        !data ? "absolute top-[15px] right-[15px]" : "sticky top-0 right-0"
+      } w-10 h-10 flex justify-center items-center bg-red-900 rounded-full text-2xl text-white ouline-none`;
       button.innerHTML = "X";
 
       button.onclick = () => {
@@ -88,20 +86,37 @@ function fetchDataSorahTafsir(sorahWhatWeWant, sorahnameLi) {
         overflow.innerHTML = "";
       };
       overflow.appendChild(button);
+      if (!data) {
+        overflow.classList.add("flex", "items-center", "justify-center");
+        errorHandling(overflow);
+      } else {
+        const allLi = document.querySelectorAll(".sorah");
+        allLi.forEach((liSorah) => {
+          liSorah.classList.remove("stop");
+        });
+        const tafsir = data.result;
+        const allTextAyahsContainer = document.createElement("div");
 
-      tafsir.forEach((one) => {
-        const ayaNumber = one.aya;
-        const arabic_text = one.arabic_text;
-        const translation = one.translation;
+        const h2 = document.createElement("h2");
+        h2.className =
+          "mb-10 text-red-800 w-fit border-b-2 border-red-800 mx-auto";
+        h2.innerHTML = `${sorahnameLi} <span>وعدد آياتها ${tafsir.length}</span>`;
+        allTextAyahsContainer.appendChild(h2);
 
-        createDataWithOverflow(
-          allTextAyahsContainer,
-          ayaNumber,
-          arabic_text,
-          translation
-        );
-      });
-      overflow.appendChild(allTextAyahsContainer);
+        tafsir.forEach((one) => {
+          const ayaNumber = one.aya;
+          const arabic_text = one.arabic_text;
+          const translation = one.translation;
+
+          createDataWithOverflow(
+            allTextAyahsContainer,
+            ayaNumber,
+            arabic_text,
+            translation
+          );
+        });
+        overflow.appendChild(allTextAyahsContainer);
+      }
     });
 }
 

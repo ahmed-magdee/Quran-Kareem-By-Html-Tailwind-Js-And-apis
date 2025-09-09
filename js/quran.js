@@ -2,6 +2,7 @@ const mainSection = document.querySelector(".main-section");
 const mainUl = document.querySelector(".main-ul");
 const loadingDiv = document.querySelector(".loading-animation");
 const overflow = document.querySelector(".overflow");
+const mainContainerDiv = document.querySelector(".main-section .container");
 
 // The Object Of Data
 let theDataProfile = {
@@ -15,6 +16,15 @@ if (dataStorage?.sorahName && dataStorage?.aya) {
     sorahName: dataStorage.sorahName,
     aya: dataStorage.aya,
   };
+}
+
+// ErrorHandling Function
+function errorHandling(element) {
+  element.classList.add("flex", "justify-center", "items-center");
+  const h2Error = document.createElement("h2");
+  h2Error.className = "text-2xl text-main";
+  h2Error.appendChild(document.createTextNode("حدث خطأ ما ):"));
+  element.appendChild(h2Error);
 }
 
 // All Sorahs Fetch
@@ -32,53 +42,54 @@ function showingData() {
       const allData = fetching.data;
       loadingDiv.remove();
       createTheDivs(allData);
+      if (typeof allData !== "object") {
+        errorHandling(mainContainerDiv);
+      }
     })
     .catch((error) => {
       console.log(error);
+      errorHandling(mainContainerDiv);
     });
 }
 showingData();
 
 // Loop On The Data And Create The suras List
 function createTheDivs(allData) {
-  allData.forEach((one) => {
-    const sorahNumber = one.number;
-    const sorahName = one.name;
-    const numberOfAyahs = one.numberOfAyahs;
-    const revelationType = one.revelationType === "Meccan" ? "مكية" : "مدنية";
+  typeof allData !== "string" &&
+    allData.forEach((one) => {
+      const sorahNumber = one.number;
+      const sorahName = one.name;
+      const numberOfAyahs = one.numberOfAyahs;
+      const revelationType = one.revelationType === "Meccan" ? "مكية" : "مدنية";
 
-    const li = document.createElement("li");
-    li.className = `sorah w-[190px] h-[170px] cursor-pointer transition-all duration-[.5s] flex items-center justify-center border-[1px] border-[#4f4b29] flex-col rounded m-3 group shadow-[0px_1px_5px_0px_rgba(79,75,41,1)] py-6
+      const li = document.createElement("li");
+      li.className = `sorah w-[190px] h-[170px] cursor-pointer transition-all duration-[.5s] flex items-center justify-center border-[1px] border-[#4f4b29] flex-col rounded m-3 group shadow-[0px_1px_5px_0px_rgba(79,75,41,1)] py-6
       ${
         theDataProfile.sorahName == sorahNumber
           ? "bg-[#4f4b29] text-white translate-y-[-10px] shadow-[0px_10px_5px_0px_rgba(79,75,41,1)]"
           : "hover:bg-[#4f4b29] hover:text-white hover:translate-y-[-10px] hover:shadow-[0px_10px_5px_0px_rgba(79,75,41,1)]"
       }
       `;
-    li.dataset.sorah = sorahNumber;
-    li.innerHTML = `<h3 class="text-bold font-secondFont text-2xl mb-6">${sorahName}</h3><p class="font-semibold mb-1">الرقم في المصحف <span>${sorahNumber}</span></p><p class="font-semibold mb-1">عدد الآيات <span>${numberOfAyahs}</span></p><p class="font-semibold  mb-1">وهي سورة <span>${revelationType}</span></p>`;
-    mainUl.appendChild(li);
+      li.dataset.sorah = sorahNumber;
+      li.innerHTML = `<h3 class="text-bold font-secondFont text-2xl mb-6">${sorahName}</h3><p class="font-semibold mb-1">الرقم في المصحف <span>${sorahNumber}</span></p><p class="font-semibold mb-1">عدد الآيات <span>${numberOfAyahs}</span></p><p class="font-semibold  mb-1">وهي سورة <span>${revelationType}</span></p>`;
+      mainUl.appendChild(li);
 
-    if (li.dataset.sorah == theDataProfile.sorahName) {
-      li.scrollIntoView({
-        block: "center",
-        behavior: "smooth",
-      });
-    }
+      if (li.dataset.sorah == theDataProfile.sorahName) {
+        li.scrollIntoView({
+          block: "center",
+          behavior: "smooth",
+        });
+      }
 
-    li.onclick = () => {
-      const animationDiv = animation();
-      overflow.appendChild(animationDiv);
-      overflow.classList.remove("top-full");
-      overflow.classList.add("top-0");
-      const allLi = document.querySelectorAll(".sorah");
-      allLi.forEach((liSorah) => {
-        liSorah.classList.add("stop");
-      });
-      const sorahWhatWeWant = +li.dataset.sorah;
-      fetchDataSorah(sorahWhatWeWant);
-    };
-  });
+      li.onclick = () => {
+        const animationDiv = animation();
+        overflow.appendChild(animationDiv);
+        overflow.classList.remove("top-full");
+        overflow.classList.add("top-0");
+        const sorahWhatWeWant = +li.dataset.sorah;
+        fetchDataSorah(sorahWhatWeWant);
+      };
+    });
 }
 
 // Fetch Sorah Data
@@ -88,20 +99,38 @@ function fetchDataSorah(sorahWhatWeWant, ayahNumber = null) {
       return response.json();
     })
     .then((fetching) => {
-      const allLi = document.querySelectorAll(".sorah");
-      allLi.forEach((liSorah) => {
-        if (liSorah.classList.contains("stop")) {
-          liSorah.classList.remove("stop");
-        }
-      });
-      const allData = fetching.data;
-      createTheMainSorah(allData, sorahWhatWeWant);
+      overflow.innerHTML = "";
+      const button = document.createElement("button");
+      button.className = `close-overflow ${
+        fetching.code !== 200
+          ? "absolute top-[15px] right-[15px]"
+          : "sticky top-0 right-0"
+      } w-10 h-10 flex justify-center items-center bg-red-900 rounded-full text-2xl text-white ouline-none`;
+      button.innerHTML = "X";
+
+      button.onclick = () => {
+        overflow.innerHTML = "";
+        overflow.classList.remove("top-0");
+        overflow.classList.add("top-full");
+      };
+      overflow.appendChild(button);
+      if (fetching.code !== 200) {
+        errorHandling(overflow);
+      } else {
+        const allLi = document.querySelectorAll(".sorah");
+        allLi.forEach((liSorah) => {
+          if (liSorah.classList.contains("stop")) {
+            liSorah.classList.remove("stop");
+          }
+        });
+        const allData = fetching.data;
+        createTheMainSorah(allData, sorahWhatWeWant);
+      }
     });
 }
 
 // Create The Divs Of Sorah's Ayats
 function createTheMainSorah(allData, sorahWhatWeWant) {
-  overflow.innerHTML = "";
   const name = allData.name;
   const number = allData.number;
   const numberOfAyahs = allData.numberOfAyahs;
@@ -144,17 +173,6 @@ function createTheMainSorah(allData, sorahWhatWeWant) {
     allTextAyahsContainer.appendChild(h2);
   });
 
-  const button = document.createElement("button");
-  button.className =
-    "close-overflow sticky top-0 right-0 w-10 h-10 flex justify-center items-center bg-red-900 rounded-full text-2xl text-white ouline-none";
-  button.innerHTML = "X";
-
-  button.onclick = () => {
-    overflow.innerHTML = "";
-    overflow.classList.remove("top-0");
-    overflow.classList.add("top-full");
-  };
-  overflow.appendChild(button);
   overflow.appendChild(allTextAyahsContainer);
   if (theDataProfile.sorahName == number && theDataProfile.aya == theAya) {
     document.querySelector(".this-aya").scrollIntoView({
